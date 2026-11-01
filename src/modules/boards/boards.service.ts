@@ -67,6 +67,80 @@ export class BoardsService {
     return { deleted: true, id: boardId };
   }
 
+  /** Admin: create a shared system board */
+  async createSystem(
+    adminId: string,
+    data: {
+      title: string;
+      coverUrl?: string | null;
+      coverSourceType?: SourceType | null;
+      order?: number;
+    },
+  ) {
+    const maxOrder = await this.boardModel
+      .findOne({ boardKind: BoardKind.SYSTEM })
+      .sort({ order: -1 })
+      .select('order')
+      .exec();
+
+    const doc = new this.boardModel({
+      title: data.title.trim(),
+      coverUrl: data.coverUrl ?? null,
+      coverSourceType: data.coverSourceType ?? null,
+      boardKind: BoardKind.SYSTEM,
+      ownerType: OwnerType.ADMIN,
+      ownerId: null,
+      order: data.order ?? (maxOrder?.order ?? -1) + 1,
+      isActive: true,
+      createdBy: new Types.ObjectId(adminId),
+      updatedBy: new Types.ObjectId(adminId),
+    });
+    return doc.save();
+  }
+
+  /** Admin: update a system board */
+  async updateSystem(
+    adminId: string,
+    boardId: string,
+    data: {
+      title?: string;
+      coverUrl?: string | null;
+      coverSourceType?: SourceType | null;
+      isActive?: boolean;
+    },
+  ) {
+    const board = await this.getSystemOrFail(boardId);
+    if (data.title !== undefined) board.title = data.title.trim();
+    if (data.coverUrl !== undefined) {
+      board.coverUrl = data.coverUrl;
+      board.coverSourceType =
+        data.coverSourceType ??
+        (data.coverUrl ? SourceType.URL : null);
+    }
+    if (data.isActive !== undefined) board.isActive = data.isActive;
+    board.updatedBy = new Types.ObjectId(adminId);
+    await board.save();
+    return board;
+  }
+
+  /** Admin: hard-delete a system board */
+  async deleteSystem(boardId: string) {
+    const board = await this.getSystemOrFail(boardId);
+    await board.deleteOne();
+    return { deleted: true, id: boardId };
+  }
+
+  private async getSystemOrFail(boardId: string) {
+    const board = await this.boardModel.findById(boardId).exec();
+    if (!board) {
+      throw new NotFoundException('Board not found');
+    }
+    if (board.boardKind !== BoardKind.SYSTEM) {
+      throw new ForbiddenException('Not a system board');
+    }
+    return board;
+  }
+
   async getAccessibleBoardOrFail(userId: string, boardId: string) {
     const board = await this.boardModel.findById(boardId).exec();
     if (!board || !board.isActive) {
