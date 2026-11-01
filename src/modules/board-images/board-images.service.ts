@@ -59,4 +59,56 @@ export class BoardImagesService {
     await image.deleteOne();
     return { deleted: true, id: imageId };
   }
+
+  /** Admin: add global image into a system (or accessible) board */
+  async addAdminImage(
+    adminId: string,
+    boardId: string,
+    data: {
+      url: string;
+      sourceType: SourceType;
+      originalFileName?: string | null;
+      mimeType?: string | null;
+      sizeBytes?: number | null;
+      order?: number;
+    },
+  ) {
+    await this.boardsService.getAccessibleBoardOrFail(adminId, boardId);
+
+    const maxOrder = await this.boardImageModel
+      .findOne({
+        boardId: new Types.ObjectId(boardId),
+        ownerType: OwnerType.ADMIN,
+      })
+      .sort({ order: -1 })
+      .select('order')
+      .exec();
+
+    return this.boardImageModel.create({
+      boardId: new Types.ObjectId(boardId),
+      url: data.url,
+      thumbUrl: null,
+      sourceType: data.sourceType,
+      originalFileName: data.originalFileName ?? null,
+      mimeType: data.mimeType ?? null,
+      sizeBytes: data.sizeBytes ?? null,
+      ownerType: OwnerType.ADMIN,
+      ownerId: null,
+      order: data.order ?? (maxOrder?.order ?? -1) + 1,
+      isActive: true,
+    });
+  }
+
+  /** Admin: delete an admin-owned board image */
+  async deleteAdminImage(imageId: string) {
+    const image = await this.boardImageModel.findById(imageId).exec();
+    if (!image) {
+      throw new NotFoundException('Image not found');
+    }
+    if (image.ownerType !== OwnerType.ADMIN) {
+      throw new ForbiddenException('Only admin images can be deleted here');
+    }
+    await image.deleteOne();
+    return { deleted: true, id: imageId };
+  }
 }
