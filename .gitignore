@@ -1,0 +1,28 @@
+# compiled
+/dist
+/node_modules
+/build
+
+# env
+.env
+.env.local
+.env.*.local
+
+# uploads (keep folder)
+/uploads/*
+!/uploads/.gitkeep
+
+# logs / coverage
+logs
+*.log
+coverage
+/.nyc_output
+
+# IDE
+.idea
+.vscode
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
