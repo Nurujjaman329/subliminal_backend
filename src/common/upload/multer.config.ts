@@ -12,7 +12,7 @@ export function ensureUploadSubdir(subdir: string) {
   return path;
 }
 
-export function diskUpload(subdir: string) {
+export function diskUpload(subdir: string, maxBytes = 25 * 1024 * 1024) {
   return {
     storage: diskStorage({
       destination: (_req, _file, cb) => {
@@ -24,7 +24,7 @@ export function diskUpload(subdir: string) {
       },
     }),
     limits: {
-      fileSize: 25 * 1024 * 1024,
+      fileSize: maxBytes,
     },
   };
 }
