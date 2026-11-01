@@ -7,7 +7,6 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { BoardImage, BoardImageDocument } from './schemas/board-image.schema';
 import { BoardsService } from '../boards/boards.service';
-import { CreateBoardImageDto } from './dto/create-board-image.dto';
 import { OwnerType, SourceType } from '../../common/constants/ownership';
 
 @Injectable()
@@ -34,16 +33,31 @@ export class BoardImagesService {
       .exec();
   }
 
-  async addUserImage(userId: string, boardId: string, dto: CreateBoardImageDto) {
+  async addUserImage(
+    userId: string,
+    boardId: string,
+    data: {
+      url: string;
+      sourceType: SourceType;
+      thumbUrl?: string | null;
+      order?: number;
+      originalFileName?: string | null;
+      mimeType?: string | null;
+      sizeBytes?: number | null;
+    },
+  ) {
     await this.boardsService.getAccessibleBoardOrFail(userId, boardId);
     return this.boardImageModel.create({
       boardId: new Types.ObjectId(boardId),
-      url: dto.url,
-      thumbUrl: dto.thumbUrl ?? null,
-      sourceType: SourceType.URL,
+      url: data.url,
+      thumbUrl: data.thumbUrl ?? null,
+      sourceType: data.sourceType,
+      originalFileName: data.originalFileName ?? null,
+      mimeType: data.mimeType ?? null,
+      sizeBytes: data.sizeBytes ?? null,
       ownerType: OwnerType.USER,
       ownerId: new Types.ObjectId(userId),
-      order: dto.order ?? 0,
+      order: data.order ?? 0,
       isActive: true,
     });
   }
