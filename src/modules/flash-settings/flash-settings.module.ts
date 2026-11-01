@@ -6,6 +6,7 @@ import {
 } from './schemas/flash-settings.schema';
 import { FlashSettingsService } from './flash-settings.service';
 import { FlashSettingsController } from './flash-settings.controller';
+import { AdminFlashSettingsController } from './admin-flash-settings.controller';
 
 @Module({
   imports: [
@@ -13,7 +14,7 @@ import { FlashSettingsController } from './flash-settings.controller';
       { name: FlashSettings.name, schema: FlashSettingsSchema },
     ]),
   ],
-  controllers: [FlashSettingsController],
+  controllers: [FlashSettingsController, AdminFlashSettingsController],
   providers: [FlashSettingsService],
   exports: [FlashSettingsService, MongooseModule],
 })
